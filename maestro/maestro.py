@@ -16,8 +16,8 @@ from . import plays
 from . import shipproviders
 from . import termoutput
 
-AVAILABLE_MAESTRO_COMMANDS = ['status', 'start', 'stop', 'restart',
-                              'pull', 'clean', 'logs', 'deptree']
+AVAILABLE_MAESTRO_COMMANDS = ['status', 'start', 'stop', 'restart', 'pull',
+                              'clean', 'logs', 'deptree', 'exec']
 
 
 class Conductor:
@@ -463,3 +463,33 @@ class Conductor:
             treehelper(service, ' ', set([]))
             if i < len(services):
                 print()
+
+    def execute(self, things, cmd, **kwargs):
+        """Execute a command on the given container(s) and service(s).
+
+        Args:
+            things (set<string>): The list of things to execute a command on.
+            cmd (str): Command to execute.
+        """
+        containers = self._ordered_containers(things, False)
+        if len(containers) != 1:
+            raise exceptions.ParameterException(
+                'Command can only be executed for a single container!')
+
+        container = containers[0]
+
+        o = termoutput.OutputFormatter()
+        o.pending('Inspecting container status...')
+        status = container.status()
+        if not status:
+            o.commit(termoutput.red('{} is not running!'.format(container)))
+            return
+
+        o.pending('Executing command on {}...'.format(container.name))
+        ex = container.ship.backend.exec_create(container.id, cmd, True, False)
+        container.ship.backend.exec_start(ex['Id'], stream=True)
+        stdout = container.ship.backend.exec_start(ex['Id'], False, False, True)
+
+        o.pending('\033[2K')
+        for line in stdout:
+            print(line.rstrip())

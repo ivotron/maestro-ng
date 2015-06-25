@@ -171,6 +171,16 @@ def create_parser():
         '-n', metavar='LINES', type=int,
         help='Only show the last LINES lines for logs')
 
+    # execute
+    subparser = subparsers.add_parser(
+        parents=[common],
+        name='execute',
+        description='Execute command on a container',
+        help='execute command on a container')
+    subparser.add_argument(
+        '-c', '--cmd', type=str, required=True,
+        help='command to execute')
+
     # deptree
     subparser = subparsers.add_parser(
         parents=[common],

@@ -3,3 +3,6 @@
 /maestro_ng.egg-info/
 *.pyc
 /.tox
+/.ropeproject
+/venv
+*.sw?
